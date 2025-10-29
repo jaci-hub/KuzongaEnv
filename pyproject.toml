@@ -1,3 +1,21 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=65", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "divide21"
+version = "0.1.0"
+description = "Gymnasium environment for the game Divide21"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "All Rights Reserved" }
+authors = [
+    { name="Jacinto Jeje Matamba Quimua" }
+]
+dependencies = [
+    "gymnasium>=0.30.0",
+    "numpy>=1.23"
+]
+
+[project.urls]
+"Source" = "https://github.com/jaci-hub/divide21Env"
