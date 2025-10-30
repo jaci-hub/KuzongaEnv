@@ -1,6 +1,6 @@
 # Divide21Env
 
-A custom Gymnasium-compatible environment for the Divide21 game.
+A custom Gymnasium-compatible environment for the [Divide21 game](https://www.divide21.com).
 
 ## Environment Details
 ### Action Space
@@ -91,3 +91,6 @@ Jacinto Jeje Matamba Quimua (2025). Divide21Env: Gym Environment for Reinforceme
 }
 ```
 
+## Play Divide21 Online
+
+[Divide21 game](https://www.divide21.com)
