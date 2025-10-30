@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="divide21",
+    name="divide21env",
     version="0.1.0",
     author="Jacinto Jeje Matamba Quimua",
     description="A custom Gymnasium-compatible environment for the Divide21 game invented by Jacinto Jeje Matamba Quimua.",
@@ -9,12 +9,14 @@ setup(
     long_description_content_type="text/markdown",
     packages=find_packages(),
     install_requires=[
-        "gymnasium>=0.29",
-        "numpy",
+        "gymnasium>=0.30.0",
+        "numpy>=1.23"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
-    python_requires=">=3.8",
+    url="https://github.com/jaci-hub/divide21Env",
+    license="MIT",
+    python_requires=">=3.11",
 )

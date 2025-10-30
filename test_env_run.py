@@ -1,4 +1,4 @@
-import divide21 
+import divide21env 
 import gymnasium as gym
 
 # Test the environment registration
