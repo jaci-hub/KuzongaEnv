@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="divide21env",
-    version="0.1.0",
+    version="0.1.1",
     author="Jacinto Jeje Matamba Quimua",
     description="A custom Gymnasium-compatible environment for the Divide21 game invented by Jacinto Jeje Matamba Quimua.",
     long_description=open("README.md", encoding="utf-8").read(),
