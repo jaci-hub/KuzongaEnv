@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Gymnasium environment for the game Divide21"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "All Rights Reserved" }
+license = { text = "MIT" }
 authors = [
     { name="Jacinto Jeje Matamba Quimua" }
 ]
