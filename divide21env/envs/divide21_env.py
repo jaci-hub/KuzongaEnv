@@ -258,10 +258,7 @@ class Divide21Env(gym.Env):
         if division:
             num = int(self.dynamic_number)
             if digit in [0, 1]: # not allowed to divide by 0 or 1
-                reward = -2*self.maxScore
-                # update player score
-                if self.players:
-                    self.players[self.player_turn]["score"] -= 2*self.maxScore
+                reward = -1
                 info["message"] = "Division by 0 or 1 is not allowed!"
             elif num % digit == 0:
                 new_num = num // digit
@@ -315,9 +312,9 @@ class Divide21Env(gym.Env):
             terminated = True
             
             if reward > 0:
-                reward += 1
+                reward += 10
             else:
-                reward -= 1
+                reward -= 10
             
             info["message"] += "\nThe game has ended!"
 
