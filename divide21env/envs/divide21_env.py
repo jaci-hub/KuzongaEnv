@@ -45,7 +45,7 @@ class Divide21Env(gym.Env):
 
         # (2) Observation space: 
         # observation is a dictionary with keys: dynamic_number, available_digits_per_rindex, players, player_turn]
-        #   dynamic_number (str): the current value of the number whose digits are manipulated
+        #   dynamic_number (int): the current value of the number whose digits are manipulated
         #   available_digits_per_rindex (dict): a dictionary where the keys are the rindexes of the dynamic_number and their values are the list of digits available at that rindex
         #   players (list): the list of dictionaries with each player's id, score and a variable (is_current_turn) that tells if it is the player's turn to play
         #   player_turn (int): the id of the player with the turn
@@ -107,11 +107,11 @@ class Divide21Env(gym.Env):
             except Exception:
                 continue
             if math.gcd(num, 210) == 1:
-                return s
+                return int(s)
 
         # fallback: deterministic string like "10...01"
         fallback = "1" + ("0" * (self.digits - 2)) + "1"
-        return fallback
+        return int(fallback)
     
     def _get_prohibited_digit_list_at_rindex(self, rindex):
         prohibited = set()
@@ -121,7 +121,7 @@ class Divide21Env(gym.Env):
 
         # can’t make number 0 or 1
         for d in [0, 1]:
-            modified = self.dynamic_number
+            modified = str(self.dynamic_number)
             modified = list(modified)        
             if rindex > 0:
                 modified[-rindex-1] = str(d)
@@ -142,7 +142,7 @@ class Divide21Env(gym.Env):
         available_digits_per_rindex = {}
 
         for i in range(self.digits):
-            current_digit = int(self.dynamic_number[self.digits-i-1])
+            current_digit = int(str(self.dynamic_number)[self.digits-i-1])
             all_digits = [d for d in range(10) if d != current_digit]
             filtered_digits = self._remove_all_prohibited_digits_at_given_rindex_from_given_list(i, all_digits)
             available_digits_per_rindex[i] = filtered_digits
@@ -161,7 +161,7 @@ class Divide21Env(gym.Env):
         self.available_digits_per_rindex = self._setup_available_digits_per_rindex()
         self.player_turn = 0
         obs = {
-            "dynamic_number": np.array([int(d) for d in self.dynamic_number], dtype=np.int8),
+            "dynamic_number": np.array([int(d) for d in str(self.dynamic_number)], dtype=np.int8),
             "available_digits_per_rindex": self._encode_available_digits(),
             "players": self._encode_players(),
             "player_turn": np.int64(self.player_turn)
@@ -180,7 +180,7 @@ class Divide21Env(gym.Env):
     def _update_available_digits_per_rindex(self, rindex=None):
         if rindex is None: # division was performed
             for i in range(self.digits):
-                current_digit = int(self.dynamic_number[self.digits-i-1])
+                current_digit = int(str(self.dynamic_number)[self.digits-i-1])
                 rindex_available_digit_list = [d for d in self.available_digits_per_rindex[i] if d != current_digit]
                 rindex_available_digit_list = self._remove_all_prohibited_digits_at_given_rindex_from_given_list(i, rindex_available_digit_list)
 
@@ -196,9 +196,9 @@ class Divide21Env(gym.Env):
             
             current_digit = None
             if rindex>0:
-                current_digit = int(self.dynamic_number[-rindex-1])
+                current_digit = int(str(self.dynamic_number)[-rindex-1])
             else:
-                current_digit = int(self.dynamic_number[self.digits-1])
+                current_digit = int(str(self.dynamic_number)[self.digits-1])
             all_digits = [d for d in range(10) if d != current_digit]
             all_digits = self._remove_all_prohibited_digits_at_given_rindex_from_given_list(rindex, all_digits)
             self.available_digits_per_rindex[rindex] = all_digits
@@ -229,7 +229,7 @@ class Divide21Env(gym.Env):
     
     def _game_over(self):
         # (1) quotient 1
-        if int(self.dynamic_number) == 1:
+        if self.dynamic_number == 1:
             return True
         # (2) max points
         for player in self.players:
@@ -267,23 +267,24 @@ class Divide21Env(gym.Env):
 
         # (1) Division attempt
         if division:
-            num = int(self.dynamic_number)
             if digit in [0, 1]: # not allowed to divide by 0 or 1
                 reward = -1
                 info["message"] = "Division by 0 or 1 is not allowed!"
-            elif num % digit == 0:
-                new_num = num // digit
-                new_num = str(new_num)
-                # keep the original number of digits
-                if len(new_num) < self.digits:
-                    new_num = "0"*(self.digits - len(new_num)) + new_num
-                self.dynamic_number = new_num
+            elif self.dynamic_number % digit == 0:
+                self.dynamic_number = self.dynamic_number // digit
+                # whenever the number of digits in the quotient is less than that of the original number, 
+                #   remove the rindex key greater than the number of digits in the quotient
+                for j in range(len(str(self.dynamic_number)), self.digits):
+                    if j in self.available_digits_per_rindex:
+                        del self.available_digits_per_rindex[j]
+                # update the number of digits
+                self.digits = len(str(self.dynamic_number))
                 reward = 1
                 # update the list of available digits per rindex
                 #   (1) remove each quotient digit from available digits per rindex
-                self._remove_each_quotient_digit_from_available_digits_per_rindex(self.dynamic_number)
+                self._remove_each_quotient_digit_from_available_digits_per_rindex(str(self.dynamic_number))
                 #   (2) update available digits per rindex
-                self._update_available_digits_per_rindex(rindex)
+                self._update_available_digits_per_rindex() # no need to pass the rindex, because a division was performed
                 # update player score
                 if self.players:
                     self.players[self.player_turn]["score"] += digit
@@ -293,16 +294,17 @@ class Divide21Env(gym.Env):
                 # update player score
                 if self.players:
                     self.players[self.player_turn]["score"] -= digit
-                info["message"] = f"Careful, {digit} is not a factor of {int(self.dynamic_number)}"
+                info["message"] = f"Careful, {digit} is not a factor of {self.dynamic_number}"
         # (2) Digit change
         else:
-            if digit in self.available_digits_per_rindex[rindex]:
-                num_str = list(self.dynamic_number)
+            if rindex in self.available_digits_per_rindex and digit in self.available_digits_per_rindex[rindex]:
+                num_str = list(str(self.dynamic_number))
                 if rindex>0:
                     num_str[-rindex-1] = str(digit)
                 else:
-                    num_str[self.digits-1] = str(digit)
+                    num_str[len(num_str)-1] = str(digit)
                 self.dynamic_number = "".join(num_str)
+                self.dynamic_number = int(self.dynamic_number)
                 reward = 1
                 # update the list of available digits per rindex
                 # (1) remove digit from rindex available digits
@@ -334,7 +336,7 @@ class Divide21Env(gym.Env):
 
         # Create Observation
         obs = {
-            "dynamic_number": np.array([int(d) for d in self.dynamic_number], dtype=np.int8),
+            "dynamic_number": np.array([int(d) for d in str(self.dynamic_number)], dtype=np.int8),
             "available_digits_per_rindex": self._encode_available_digits(),
             "players": self._encode_players(),
             "player_turn": np.int64(self.player_turn)
