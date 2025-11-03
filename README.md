@@ -29,7 +29,7 @@ The environment uses a dictionary observation space with the following keys:
 |----------------------------|-------------------------|-------------|
 | dynamic_number             | np.int8 array (digits,) | The current number as an array of digits. |
 | available_digits_per_rindex | np.int64 array (digits*10,) | Binary mask of which digits can be set at each position. Flattened from shape (digits, 10). |
-| players                    | np.int64 array (num_players*3,) | Each player’s `[id, score, is_current_turn]`. Flattened array of all players. |
+| players                    | np.int64 array (num_players*3,) | Each player’s `[id, score, is_current_turn]`. Flattened array of all players. It has one player by default. |
 | player_turn                | int                      | ID of the player whose turn it is. |
 
 
