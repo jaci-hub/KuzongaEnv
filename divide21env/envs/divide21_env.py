@@ -261,84 +261,95 @@ class Divide21Env(gym.Env):
         Returns:
             obs, reward, terminated, truncated, info
         """
-        division = bool(action["division"]) if action["division"] in [0, 1, True, False] else None
-        digit = int(action["digit"]) if action["digit"] in range(0, 10) else None
-        rindex = int(action["rindex"]) if (isinstance(action["rindex"], (int, np.integer)) and action["rindex"]>=0) else None
         reward = 0
         terminated = False
         truncated = False
         info = {}
-
-        # check division
-        if division is None:
-            reward = -1
-            info["message"] = "The value for the division attribute must be either True or False, or 1 or 0."
-        # check digit
-        elif digit is None:
-            reward = -1
-            info["message"] = "Digit must be between 0-9."
-        # check rindex
-        elif rindex is None:
-            reward = -1
-            info["message"] = "Rindex must be an integer greater than or equal to 0."
         
-        # (1) Division attempt
-        elif division:
-            if digit in [0, 1]: # not allowed to divide by 0 or 1
-                reward = -1
-                info["message"] = "Division by 0 or 1 is not allowed!"
-            elif self.dynamic_number % digit == 0:
-                self.dynamic_number = self.dynamic_number // digit
-                # whenever the number of digits in the quotient is less than that of the original number, 
-                #   remove the rindex key greater than the number of digits in the quotient
-                for j in range(len(str(self.dynamic_number)), self.digits):
-                    if j in self.available_digits_per_rindex:
-                        del self.available_digits_per_rindex[j]
-                # update the number of digits
-                self.digits = len(str(self.dynamic_number))
-                reward = 1
-                # update the list of available digits per rindex
-                #   (1) remove each quotient digit from available digits per rindex
-                self._remove_each_quotient_digit_from_available_digits_per_rindex(str(self.dynamic_number))
-                #   (2) update available digits per rindex
-                self._update_available_digits_per_rindex() # no need to pass the rindex, because a division was performed
-                # update player score
-                if self.players:
-                    self.players[self.player_turn]["score"] += digit
-                info["message"] = f"Divided by {digit}."
-            else:
-                reward = -1
-                # update player score
-                if self.players:
-                    self.players[self.player_turn]["score"] -= digit
-                info["message"] = f"Careful, {digit} is not a factor of {self.dynamic_number}."
-        # (2) Digit change
+        # check action
+        expected_keys = {'division', 'digit', 'rindex'}
+        if not isinstance(action, dict):
+            reward = -1
+            info["message"] = "Action must be a Python dictionary."
+        elif set(action.keys()) != expected_keys:
+            reward = -1
+            info["message"] = f"Action dictionary must have exactly these keys: {', '.join(expected_keys)}."
         else:
-            if rindex in self.available_digits_per_rindex and digit in self.available_digits_per_rindex[rindex]:
-                num_str = list(str(self.dynamic_number))
-                if rindex>0:
-                    num_str[-rindex-1] = str(digit)
-                else:
-                    num_str[len(num_str)-1] = str(digit)
-                self.dynamic_number = "".join(num_str)
-                self.dynamic_number = int(self.dynamic_number)
-                reward = 1
-                # update the list of available digits per rindex
-                # (1) remove digit from rindex available digits
-                self._remove_digit_from_rindex_available_digits(rindex, digit)
-                # (2) update available digits per rindex
-                self._update_available_digits_per_rindex(rindex)
-                # update player turn
-                if self.players:
-                    self.player_turn = (self.player_turn + 1) % len(self.players)
-                    self.players[self.player_turn]['is_current_turn'] = 1
-                    for player in self.players:
-                        if player['id'] != self.players[self.player_turn]['id']:
-                            player['is_current_turn'] = 0
-                info["message"] = f"Updated digit at rindex {rindex} to {digit}"
-            else:
+            # get attributes
+            division = bool(action["division"]) if action["division"] in [0, 1, True, False] else None
+            digit = int(action["digit"]) if action["digit"] in range(0, 10) else None
+            rindex = int(action["rindex"]) if (isinstance(action["rindex"], (int, np.integer)) and action["rindex"]>=0) else None
+
+            # check division
+            if division is None:
                 reward = -1
-                info["message"] = f"Cannot update the digit at rindex {rindex} to {digit}."
+                info["message"] = "The value for the division attribute must be either True or False, or 1 or 0."
+            # check digit
+            elif digit is None:
+                reward = -1
+                info["message"] = "Digit must be between 0-9."
+            # check rindex
+            elif rindex is None:
+                reward = -1
+                info["message"] = "Rindex must be an integer greater than or equal to 0."
+            
+            # (1) Division attempt
+            elif division:
+                if digit in [0, 1]: # not allowed to divide by 0 or 1
+                    reward = -1
+                    info["message"] = "Division by 0 or 1 is not allowed!"
+                elif self.dynamic_number % digit == 0:
+                    self.dynamic_number = self.dynamic_number // digit
+                    # whenever the number of digits in the quotient is less than that of the original number, 
+                    #   remove the rindex key greater than the number of digits in the quotient
+                    for j in range(len(str(self.dynamic_number)), self.digits):
+                        if j in self.available_digits_per_rindex:
+                            del self.available_digits_per_rindex[j]
+                    # update the number of digits
+                    self.digits = len(str(self.dynamic_number))
+                    reward = 1
+                    # update the list of available digits per rindex
+                    #   (1) remove each quotient digit from available digits per rindex
+                    self._remove_each_quotient_digit_from_available_digits_per_rindex(str(self.dynamic_number))
+                    #   (2) update available digits per rindex
+                    self._update_available_digits_per_rindex() # no need to pass the rindex, because a division was performed
+                    # update player score
+                    if self.players:
+                        self.players[self.player_turn]["score"] += digit
+                    info["message"] = f"Divided by {digit}."
+                else:
+                    reward = -1
+                    # update player score
+                    if self.players:
+                        self.players[self.player_turn]["score"] -= digit
+                    info["message"] = f"Careful, {digit} is not a factor of {self.dynamic_number}."
+            # (2) Digit change
+            else:
+                if rindex in self.available_digits_per_rindex and digit in self.available_digits_per_rindex[rindex]:
+                    num_str = list(str(self.dynamic_number))
+                    if rindex>0:
+                        num_str[-rindex-1] = str(digit)
+                    else:
+                        num_str[len(num_str)-1] = str(digit)
+                    self.dynamic_number = "".join(num_str)
+                    self.dynamic_number = int(self.dynamic_number)
+                    reward = 1
+                    # update the list of available digits per rindex
+                    # (1) remove digit from rindex available digits
+                    self._remove_digit_from_rindex_available_digits(rindex, digit)
+                    # (2) update available digits per rindex
+                    self._update_available_digits_per_rindex(rindex)
+                    # update player turn
+                    if self.players:
+                        self.player_turn = (self.player_turn + 1) % len(self.players)
+                        self.players[self.player_turn]['is_current_turn'] = 1
+                        for player in self.players:
+                            if player['id'] != self.players[self.player_turn]['id']:
+                                player['is_current_turn'] = 0
+                    info["message"] = f"Updated digit at rindex {rindex} to {digit}."
+                else:
+                    reward = -1
+                    info["message"] = f"Cannot update the digit at rindex {rindex} to {digit}."
 
         # Check if game is over
         if self._game_over():
@@ -349,7 +360,7 @@ class Divide21Env(gym.Env):
             else:
                 reward -= 10
             
-            info["message"] += "\nThe game has ended!"
+            info["message"] += " Game over!"
 
         # Create Observation
         obs = {
