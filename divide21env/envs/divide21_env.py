@@ -19,13 +19,14 @@ class Divide21Env(gym.Env):
 
     def __init__(self, digits=2, players=None, render_mode=None, auto_render=False):
         super().__init__()
-        self.players = players or []
+        self.players = players if isinstance(players, list) and len(players) > 0 else [{"id": 0, "score": 0, "is_current_turn": 1}]
         self.dynamic_number = None
         self.player_turn = 0
         self.digits = digits
         self.available_digits_per_rindex = {i: list(range(10)) for i in range(digits)}
         self.maxScore = 9*digits
         self.render_mode = render_mode
+        self.auto_render = auto_render
         
         warnings.filterwarnings(
             "ignore",
@@ -47,9 +48,9 @@ class Divide21Env(gym.Env):
         # observation is a dictionary with keys: dynamic_number, available_digits_per_rindex, players, player_turn]
         #   dynamic_number (int): the current value of the number whose digits are manipulated
         #   available_digits_per_rindex (dict): a dictionary where the keys are the rindexes of the dynamic_number and their values are the list of digits available at that rindex
-        #   players (list): the list of dictionaries with each player's id, score and a variable (is_current_turn) that tells if it is the player's turn to play
+        #   players (list): the list of dictionaries with each player's id, score and a variable (is_current_turn) that tells if it is the player's turn to play. By default there is one player in the list
         #   player_turn (int): the id of the player with the turn
-        number_of_players = max(1, len(self.players)) # since spaces.Discrete(n) goes from 0 to n-1, so if players=[], then number_of_players will still be 1 so spaces.Discrete(1) will just be 0
+        number_of_players = max(1, len(self.players))
         self.observation_space = spaces.Dict({
             "dynamic_number": spaces.Box(
                 low=0,
@@ -239,8 +240,11 @@ class Divide21Env(gym.Env):
         count = 0
         for player in self.players:
             if player['score'] <= -self.maxScore:
-                count += 1
-        if count == len(self.players) - 1:
+                if len(self.players) > 1:
+                    count += 1
+                else:
+                    return True
+        if len(self.players) > 1 and count == len(self.players) - 1:
             return True
         
         return False
@@ -385,7 +389,6 @@ if __name__ == "__main__":
     # initialize environment to test
     env = Divide21Env(
         digits = 2,
-        players = [{"id": 0, "score": 0, "is_current_turn": 1}, {"id": 1, "score": 0, "is_current_turn": 0}],
         # render_mode='human', # comment this line when training RL models
         # auto_render=True # comment this line when training RL models
     )
