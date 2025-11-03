@@ -257,16 +257,29 @@ class Divide21Env(gym.Env):
         Returns:
             obs, reward, terminated, truncated, info
         """
-        division = bool(action["division"])
-        digit = int(action["digit"])
-        rindex = int(action["rindex"])
+        division = bool(action["division"]) if action["division"] in [0, 1, True, False] else None
+        digit = int(action["digit"]) if action["digit"] in range(0, 10) else None
+        rindex = int(action["rindex"]) if (isinstance(action["rindex"], (int, np.integer)) and action["rindex"]>=0) else None
         reward = 0
         terminated = False
         truncated = False
         info = {}
 
+        # check division
+        if division is None:
+            reward = -1
+            info["message"] = "The value for the division attribute must be either True or False, or 1 or 0."
+        # check digit
+        elif digit is None:
+            reward = -1
+            info["message"] = "Digit must be between 0-9."
+        # check rindex
+        elif rindex is None:
+            reward = -1
+            info["message"] = "Rindex must be an integer greater than or equal to 0."
+        
         # (1) Division attempt
-        if division:
+        elif division:
             if digit in [0, 1]: # not allowed to divide by 0 or 1
                 reward = -1
                 info["message"] = "Division by 0 or 1 is not allowed!"
@@ -288,13 +301,13 @@ class Divide21Env(gym.Env):
                 # update player score
                 if self.players:
                     self.players[self.player_turn]["score"] += digit
-                info["message"] = f"Divided by {digit}"
+                info["message"] = f"Divided by {digit}."
             else:
                 reward = -1
                 # update player score
                 if self.players:
                     self.players[self.player_turn]["score"] -= digit
-                info["message"] = f"Careful, {digit} is not a factor of {self.dynamic_number}"
+                info["message"] = f"Careful, {digit} is not a factor of {self.dynamic_number}."
         # (2) Digit change
         else:
             if rindex in self.available_digits_per_rindex and digit in self.available_digits_per_rindex[rindex]:
@@ -321,7 +334,7 @@ class Divide21Env(gym.Env):
                 info["message"] = f"Updated digit at rindex {rindex} to {digit}"
             else:
                 reward = -1
-                info["message"] = f"Cannot update the digit at rindex {rindex} to {digit}"
+                info["message"] = f"Cannot update the digit at rindex {rindex} to {digit}."
 
         # Check if game is over
         if self._game_over():
