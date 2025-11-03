@@ -7,9 +7,9 @@ A custom Gymnasium-compatible environment for the [Divide21 game](https://www.di
 
 The environment uses a dictionary action space with three components:
 
-| Key       | Type       | Description |
+| Key       | Value       | Description |
 |-----------|------------|-------------|
-| division  | 0 or 1     | Whether to attempt division (`1`) or change a digit (`0`). |
+| division  | 1 or 0 (or True and False, respectively)     | Whether to attempt division (`1`) or change a digit (`0`). |
 | digit     | 0–9        | If `division=1`, the divisor; if `division=0`, the new digit to set at `rindex`. |
 | rindex     | 0…digits-1 | Rindex (Right-to-left or reverse index) of the digit to overwrite (ignored if `division=1`). |
 
