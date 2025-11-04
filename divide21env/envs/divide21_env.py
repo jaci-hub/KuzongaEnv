@@ -10,16 +10,15 @@ import random
 import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
-from gymnasium.utils.env_checker import check_env
 import warnings
 
 
 class Divide21Env(gym.Env):
     metadata = {"render_modes": ["human"]}
 
-    def __init__(self, digits=2, players=None, render_mode=None, auto_render=False):
+    def __init__(self, digits=2, players=1, render_mode=None, auto_render=False):
         super().__init__()
-        self.players = players if isinstance(players, list) and len(players) > 0 else [{"id": 0, "score": 0, "is_current_turn": 1}]
+        self.players = [{"id": i, "score": 0, "is_current_turn": 1 if i==0 else 0} for i in range(players)]
         self.dynamic_number = None
         self.player_turn = 0
         self.digits = digits
@@ -50,7 +49,7 @@ class Divide21Env(gym.Env):
         #   available_digits_per_rindex (dict): a dictionary where the keys are the rindexes of the dynamic_number and their values are the list of digits available at that rindex
         #   players (list): the list of dictionaries with each player's id, score and a variable (is_current_turn) that tells if it is the player's turn to play. By default there is one player in the list
         #   player_turn (int): the id of the player with the turn
-        number_of_players = max(1, len(self.players))
+        number_of_players = len(self.players)
         self.observation_space = spaces.Dict({
             "dynamic_number": spaces.Box(
                 low=0,
@@ -60,8 +59,8 @@ class Divide21Env(gym.Env):
             ),
             "available_digits_per_rindex": spaces.MultiBinary(10 * digits),
             "players": spaces.Box(
-                low=np.array([0, -self.maxScore, 0] * number_of_players, dtype=np.int64),
-                high=np.array([number_of_players - 1, self.maxScore, 1] * number_of_players, dtype=np.int64),
+                low=np.array([0, -self.maxScore-8, 0] * number_of_players, dtype=np.int64),
+                high=np.array([number_of_players - 1, self.maxScore+8, 1] * number_of_players, dtype=np.int64),
                 shape=(number_of_players * 3,),
                 dtype=np.int64
             ),
@@ -249,6 +248,17 @@ class Divide21Env(gym.Env):
         
         return False
     
+    def _update_player_turn(self):
+        if self.players:
+            self.player_turn = (self.player_turn + 1) % len(self.players)
+            if len(self.players) > 1:
+                while self.players[self.player_turn]['score'] <= -self.maxScore:
+                    self.player_turn = (self.player_turn + 1) % len(self.players)
+            self.players[self.player_turn]['is_current_turn'] = 1
+            for player in self.players:
+                if player['id'] != self.players[self.player_turn]['id']:
+                    player['is_current_turn'] = 0
+    
     def step(self, action):
         """
         Executes one step of the Divide21 environment.
@@ -327,6 +337,9 @@ class Divide21Env(gym.Env):
                     # update player score
                     if self.players:
                         self.players[self.player_turn]["score"] -= digit
+                        if self.players[self.player_turn]['score'] <= -self.maxScore:
+                            # update player turn
+                            self._update_player_turn()
                     info["note"] = f"Careful, {digit} is not a factor of {self.dynamic_number}."
             # (2) Digit change
             else:
@@ -345,12 +358,7 @@ class Divide21Env(gym.Env):
                     # (2) update available digits per rindex
                     self._update_available_digits_per_rindex(rindex)
                     # update player turn
-                    if self.players:
-                        self.player_turn = (self.player_turn + 1) % len(self.players)
-                        self.players[self.player_turn]['is_current_turn'] = 1
-                        for player in self.players:
-                            if player['id'] != self.players[self.player_turn]['id']:
-                                player['is_current_turn'] = 0
+                    self._update_player_turn()
                     info["note"] = f"Updated digit at rindex {rindex} to {digit}."
                 else:
                     reward += -2
@@ -385,9 +393,9 @@ class Divide21Env(gym.Env):
     def render(self):
         if self.render_mode == "human":
             print()
-            print(f"Turn: Player{self.player_turn}")
             print(f"Number: {self.dynamic_number}")
             print(f"Available digits per rindex: {self.available_digits_per_rindex}")
+            print(f"Turn: Player{self.player_turn}")
             print('*** Scoreboard ***')
             for p in self.players:
                 print(f"Player{p['id']}: {p['score']} pts")
@@ -396,24 +404,4 @@ class Divide21Env(gym.Env):
 
     def close(self):
         return super().close()
-
-
-
-if __name__ == "__main__":
-    # check_env(Divide21Env())
-
-    # initialize environment to test
-    env = Divide21Env(
-        digits = 2,
-        # render_mode='human', # comment this line when training RL models
-        # auto_render=True # comment this line when training RL models
-    )
-    obs, info = env.reset()
-    # test five examples
-    for i in range(5):
-        action = env.action_space.sample()
-        obs, reward, done, trunc, info = env.step(action)
-        # print(info)
-        if done or trunc:
-            break
     
