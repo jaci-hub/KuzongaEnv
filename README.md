@@ -11,13 +11,13 @@ The environment uses a dictionary action space with three components:
 |-----------|------------|-------------|
 | division  | 1 or 0 (or True and False, respectively)     | Whether to attempt division (`1`) or change a digit (`0`). |
 | digit     | 0–9        | If `division=1`, the divisor; if `division=0`, the new digit to set at `rindex`. |
-| rindex     | 0…digits-1 | Rindex (Right-to-left or reverse index) of the digit to overwrite (ignored if `division=1`). |
+| rindex     | 0…digits-1 or `None` | Rindex (Right-to-left or reverse index) of the digit to overwrite (if `division=1`, it should be `None`). |
 
 
 Example:
 
 ```python
-action = {"division": 1, "digit": 3, "rindex": 0}  # attempt division by 3
+action = {"division": 1, "digit": 3, "rindex": None}  # attempt division by 3
 action = {"division": 0, "digit": 7, "rindex": 1}  # set the second digit (from the right) to 7
 ```
 
