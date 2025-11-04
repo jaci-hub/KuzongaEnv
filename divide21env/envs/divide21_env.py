@@ -269,10 +269,10 @@ class Divide21Env(gym.Env):
         # check action
         expected_keys = {'division', 'digit', 'rindex'}
         if not isinstance(action, dict):
-            reward = -5
+            reward += -5
             info["critical"] = "Action must be a Python dictionary."
         elif set(action.keys()) != expected_keys:
-            reward = -5
+            reward += -5
             info["critical"] = f"Action dictionary must have exactly these keys: {', '.join(expected_keys)}."
         else:
             # get attributes
@@ -282,26 +282,26 @@ class Divide21Env(gym.Env):
 
             # check division
             if division is None:
-                reward = -5
+                reward += -5
                 info["critical"] = "The value for the division attribute must be either True or False, or 1 or 0."
             # check digit
             elif digit is None:
-                reward = -5
+                reward += -5
                 info["critical"] = "Digit must be between 0-9."
             # check rindex
             elif rindex is None:
-                reward = -5
+                reward += -5
                 info["critical"] = "Rindex must be an integer greater than or equal to 0."
             
             # (1) Division attempt
             elif division:
                 # deduct points if rindex is not None
                 if rindex != None:
-                    reward = -2
+                    reward += -2
                     info["warning"] = "Rindex should have not been provided!"
                 
                 if digit in [0, 1]: # not allowed to divide by 0 or 1
-                    reward = -5
+                    reward += -5
                     info["critical"] = "Division by 0 or 1 is not allowed!"
                 elif self.dynamic_number % digit == 0:
                     self.dynamic_number = self.dynamic_number // digit
@@ -312,7 +312,7 @@ class Divide21Env(gym.Env):
                             del self.available_digits_per_rindex[j]
                     # update the number of digits
                     self.digits = len(str(self.dynamic_number))
-                    reward = 1
+                    reward += 1
                     # update the list of available digits per rindex
                     #   (1) remove each quotient digit from available digits per rindex
                     self._remove_each_quotient_digit_from_available_digits_per_rindex(str(self.dynamic_number))
@@ -323,7 +323,7 @@ class Divide21Env(gym.Env):
                         self.players[self.player_turn]["score"] += digit
                     info["note"] = f"Divided by {digit}."
                 else:
-                    reward = -1
+                    reward += -1
                     # update player score
                     if self.players:
                         self.players[self.player_turn]["score"] -= digit
@@ -338,7 +338,7 @@ class Divide21Env(gym.Env):
                         num_str[len(num_str)-1] = str(digit)
                     self.dynamic_number = "".join(num_str)
                     self.dynamic_number = int(self.dynamic_number)
-                    reward = 1
+                    reward += 1
                     # update the list of available digits per rindex
                     # (1) remove digit from rindex available digits
                     self._remove_digit_from_rindex_available_digits(rindex, digit)
@@ -353,7 +353,7 @@ class Divide21Env(gym.Env):
                                 player['is_current_turn'] = 0
                     info["note"] = f"Updated digit at rindex {rindex} to {digit}."
                 else:
-                    reward = -2
+                    reward += -2
                     info["warning"] = f"Cannot update the digit at rindex {rindex} to {digit}."
 
         # Check if game is over
