@@ -27,6 +27,7 @@ The environment uses a dictionary observation space with the following keys:
 
 | Key                        | Type                     | Description |
 |----------------------------|-------------------------|-------------|
+| static_number             | np.int8 array (digits,) | The original number as an array of digits. |
 | dynamic_number             | np.int8 array (digits,) | The current number as an array of digits. |
 | available_digits_per_rindex | np.int64 array (digits*10,) | Binary mask of which digits can be set at each position. Flattened from shape (digits, 10). |
 | players                    | np.int64 array (num_players*3,) | Each player’s `[id, score, is_current_turn]`. Flattened array of all players. It has one player by default. |
@@ -37,6 +38,7 @@ Example:
 
 ```python
 obs, info = env.reset()
+print(obs["static_number"])             # [1, 7]
 print(obs["dynamic_number"])            # [4, 7]
 print(obs["available_digits_per_rindex"])  # array([1,1,0,...])
 print(obs["players"])                   # array([0,0,1,1,0,0])  # two players
