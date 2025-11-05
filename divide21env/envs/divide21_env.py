@@ -19,6 +19,7 @@ class Divide21Env(gym.Env):
     def __init__(self, digits=2, players=1, render_mode=None, auto_render=False):
         super().__init__()
         self.players = [{"id": i, "score": 0, "is_current_turn": 1 if i==0 else 0} for i in range(players)]
+        self.static_number = None
         self.dynamic_number = None
         self.player_turn = 0
         self.digits = digits
@@ -44,13 +45,20 @@ class Divide21Env(gym.Env):
         })
 
         # (2) Observation space: 
-        # observation is a dictionary with keys: dynamic_number, available_digits_per_rindex, players, player_turn]
+        # observation is a dictionary with keys: static_number, dynamic_number, available_digits_per_rindex, players, player_turn]
+        #   static_number (int): the value of the number originally generated
         #   dynamic_number (int): the current value of the number whose digits are manipulated
         #   available_digits_per_rindex (dict): a dictionary where the keys are the rindexes of the dynamic_number and their values are the list of digits available at that rindex
         #   players (list): the list of dictionaries with each player's id, score and a variable (is_current_turn) that tells if it is the player's turn to play. By default there is one player in the list
         #   player_turn (int): the id of the player with the turn
         number_of_players = len(self.players)
         self.observation_space = spaces.Dict({
+            "static_number": spaces.Box(
+                low=0,
+                high=9,
+                shape=(digits,),
+                dtype=np.int8
+            ),
             "dynamic_number": spaces.Box(
                 low=0,
                 high=9,
@@ -157,10 +165,13 @@ class Divide21Env(gym.Env):
 
     def reset(self, *, seed = None, options = None):
         super().reset(seed=seed)
-        self.dynamic_number = self._create_dynamic_number()
+        original_number = self._create_dynamic_number()
+        self.static_number = original_number
+        self.dynamic_number = original_number
         self.available_digits_per_rindex = self._setup_available_digits_per_rindex()
         self.player_turn = 0
         obs = {
+            "static_number": np.array([int(d) for d in str(self.static_number)], dtype=np.int8),
             "dynamic_number": np.array([int(d) for d in str(self.dynamic_number)], dtype=np.int8),
             "available_digits_per_rindex": self._encode_available_digits(),
             "players": self._encode_players(),
@@ -377,6 +388,7 @@ class Divide21Env(gym.Env):
 
         # Create Observation
         obs = {
+            "static_number": np.array([int(d) for d in str(self.static_number)], dtype=np.int8),
             "dynamic_number": np.array([int(d) for d in str(self.dynamic_number)], dtype=np.int8),
             "available_digits_per_rindex": self._encode_available_digits(),
             "players": self._encode_players(),
@@ -393,7 +405,8 @@ class Divide21Env(gym.Env):
     def render(self):
         if self.render_mode == "human":
             print()
-            print(f"Number: {self.dynamic_number}")
+            print(f"Static Number: {self.static_number}")
+            print(f"Dynamic Number: {self.dynamic_number}")
             print(f"Available digits per rindex: {self.available_digits_per_rindex}")
             print(f"Turn: Player{self.player_turn}")
             print('*** Scoreboard ***')
