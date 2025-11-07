@@ -11,6 +11,8 @@ import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
 import warnings
+from divide21env.inspection.inspector import Inspector
+
 
 
 class Divide21Env(gym.Env):
@@ -76,12 +78,15 @@ class Divide21Env(gym.Env):
         })
     
     
-    def _encode_players(self):
+    def _encode_players(self, given_players=None):
         '''
         Encodes player info numerically:
         Each player has attributes: id, score, is_current_turn
             Note: if is_current_turn=1, it is the player's turn to play, else, it is not 
         '''
+        if given_players != None:
+            self.players = given_players
+        
         if not self.players:
             # create a default single-player representation
             encoded = np.zeros((1, 3), dtype=np.int64)
@@ -157,7 +162,10 @@ class Divide21Env(gym.Env):
 
         return available_digits_per_rindex
     
-    def _encode_available_digits(self):
+    def _encode_available_digits(self, given_available_digits_per_rindex=None):
+        if given_available_digits_per_rindex != None:
+            self.available_digits_per_rindex = given_available_digits_per_rindex
+        
         mask = np.zeros((self.digits, 10), dtype=np.int64)
         for idx, available in self.available_digits_per_rindex.items():
             mask[idx, available] = 1
@@ -180,6 +188,61 @@ class Divide21Env(gym.Env):
         info = {"seed": seed}
         return obs, info
     
+    def _manual_reset(self, *, seed = None, obs = None):
+        '''
+        resets the ennvironment manually with the obs key-value dictionary (obs) as an argument.
+            if obs does not pass inspection, it falls back to the default gym-env reset
+        '''
+        inspector = Inspector(state=obs)
+        inspector.inspect_state()
+        if not inspector.state_passed():
+            self.reset(seed=seed)
+            return
+        
+        super().reset(seed=seed)
+        
+        # update observation space var
+        digits = len(str(obs["static_number"]))
+        number_of_players = len(obs["players"])
+        self.maxScore = 9*digits
+        self.observation_space = spaces.Dict({
+            "static_number": spaces.Box(
+                low=0,
+                high=9,
+                shape=(digits,),
+                dtype=np.int8
+            ),
+            "dynamic_number": spaces.Box(
+                low=0,
+                high=9,
+                shape=(digits,),
+                dtype=np.int8
+            ),
+            "available_digits_per_rindex": spaces.MultiBinary(10 * digits),
+            "players": spaces.Box(
+                low=np.array([0, -self.maxScore-8, 0] * number_of_players, dtype=np.int64),
+                high=np.array([number_of_players - 1, self.maxScore+8, 1] * number_of_players, dtype=np.int64),
+                shape=(number_of_players * 3,),
+                dtype=np.int64
+            ),
+            "player_turn": spaces.Discrete(number_of_players)
+        })
+        
+        self.static_number = obs["static_number"]
+        self.dynamic_number = obs["dynamic_number"]
+        self.available_digits_per_rindex = obs["available_digits_per_rindex"]
+        self.players = obs["players"]
+        self.player_turn = obs["player_turn"]
+        
+        new_obs = {
+            "static_number": np.array([int(d) for d in str(obs["static_number"])], dtype=np.int8),
+            "dynamic_number": np.array([int(d) for d in str(obs["dynamic_number"])], dtype=np.int8),
+            "available_digits_per_rindex": self._encode_available_digits(obs["available_digits_per_rindex"]),
+            "players": self._encode_players(obs["players"]),
+            "player_turn": np.int64(obs["player_turn"])
+        }
+        info = {"manual_reset": True}
+        return new_obs, info
     
     def _rindex_available_digit_list_is_empty(self, rindex):
         if not self.available_digits_per_rindex:
@@ -277,7 +340,7 @@ class Divide21Env(gym.Env):
             action (dict): {
                 "division": 0 or 1,
                 "digit": int,
-                "rindex": int (ignored if division == 1)
+                "rindex": int if division == 0, else None
             }
         Returns:
             obs, reward, terminated, truncated, info
@@ -310,7 +373,7 @@ class Divide21Env(gym.Env):
                 reward += -5
                 info["critical"] = "Digit must be between 0-9."
             # check rindex
-            elif rindex is None:
+            elif rindex is None and division is None:
                 reward += -5
                 info["critical"] = "Rindex must be an integer greater than or equal to 0."
             
