@@ -171,12 +171,15 @@ class Divide21Env(gym.Env):
             mask[idx, available] = 1
         return mask.flatten()
 
-    def reset(self, *, seed = None, options = None, manual_obs=None):
+    def reset(self, *, seed = None, options = None):
+        manual_obs = None
+        if options:
+            manual_obs = options.get('obs', None)
         inspector = Inspector(state=manual_obs)
         inspector.inspect_state()
         
         if inspector.state_passed():
-            return self._manual_reset(seed=seed, obs=manual_obs)
+            return self._manual_reset(seed=seed, options=options)
         
         super().reset(seed=seed)
         original_number = self._create_dynamic_number()
@@ -195,12 +198,18 @@ class Divide21Env(gym.Env):
         info = {"seed": seed}
         return obs, info
     
-    def _manual_reset(self, *, seed = None, options = None, obs = None):
+    def _manual_reset(self, *, seed = None, options = None):
         '''
         resets the ennvironment manually with the obs key-value dictionary (obs) as an argument.
             if obs does not pass inspection, it falls back to the default gym-env reset
         '''
         super().reset(seed=seed)
+        
+        obs = None
+        if options:
+            obs = options.get('obs', None)
+        else:
+            return # It should not get here!
         
         # update observation space var
         digits = len(str(obs["static_number"]))

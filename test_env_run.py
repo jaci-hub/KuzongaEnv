@@ -17,7 +17,10 @@ env = gym.make(
 # )
 
 def manual_reset_test(state):
-    obs, info = env.reset(manual_obs=state)
+    options = {
+        'obs': state
+    }
+    obs, info = env.reset(options=options)
     print(info)
     # test five examples
     for i in range(5):
