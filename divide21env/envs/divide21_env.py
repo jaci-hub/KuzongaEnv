@@ -171,7 +171,13 @@ class Divide21Env(gym.Env):
             mask[idx, available] = 1
         return mask.flatten()
 
-    def reset(self, *, seed = None, options = None):
+    def reset(self, *, seed = None, options = None, manual_obs=None):
+        inspector = Inspector(state=manual_obs)
+        inspector.inspect_state()
+        
+        if inspector.state_passed():
+            return self._manual_reset(seed=seed, obs=manual_obs)
+        
         super().reset(seed=seed)
         original_number = self._create_dynamic_number()
         self.static_number = original_number
@@ -185,20 +191,15 @@ class Divide21Env(gym.Env):
             "players": self._encode_players(),
             "player_turn": np.int64(self.player_turn)
         }
+        
         info = {"seed": seed}
         return obs, info
     
-    def _manual_reset(self, *, seed = None, obs = None):
+    def _manual_reset(self, *, seed = None, options = None, obs = None):
         '''
         resets the ennvironment manually with the obs key-value dictionary (obs) as an argument.
             if obs does not pass inspection, it falls back to the default gym-env reset
         '''
-        inspector = Inspector(state=obs)
-        inspector.inspect_state()
-        if not inspector.state_passed():
-            self.reset(seed=seed)
-            return
-        
         super().reset(seed=seed)
         
         # update observation space var
@@ -241,6 +242,8 @@ class Divide21Env(gym.Env):
             "players": self._encode_players(obs["players"]),
             "player_turn": np.int64(obs["player_turn"])
         }
+        
+        info = {"seed": seed}
         info = {"manual_reset": True}
         return new_obs, info
     

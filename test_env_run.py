@@ -11,7 +11,7 @@ env = gym.make(
 )
 
 def manual_reset_test(state):
-    obs, info = env._manual_reset(obs=state)
+    obs, info = env.reset(manual_obs=state)
     print(info)
     # test five examples
     for i in range(5):
@@ -42,6 +42,6 @@ if __name__ == "__main__":
         "player_turn": 0
     }
     
-    # manual_reset_test(state)
+    manual_reset_test(state)
     
-    reset_test()
+    # reset_test()
