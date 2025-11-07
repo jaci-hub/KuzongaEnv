@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "divide21env"
-version = "0.2.4"
+version = "0.2.5"
 description = "Gymnasium environment for the game Divide21"
 readme = "README.md"
 requires-python = ">=3.11"
