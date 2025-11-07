@@ -1,6 +1,7 @@
 import divide21env 
 import gymnasium as gym
 from gymnasium.utils.env_checker import check_env
+from divide21env.envs.divide21_env import Divide21Env
 
 
 # Test the environment registration
@@ -9,6 +10,11 @@ env = gym.make(
     render_mode="human",
     auto_render=True
 )
+
+# env = Divide21Env(
+#     render_mode="human",
+#     auto_render=True
+# )
 
 def manual_reset_test(state):
     obs, info = env.reset(manual_obs=state)
