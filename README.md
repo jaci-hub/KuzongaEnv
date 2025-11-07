@@ -53,6 +53,8 @@ Rewards and penalties are automatically updated in the environment during *step(
 
 The environment fully supports multiple players, and tracks turns via *player_turn* and *is_current_turn*.
 
+The *_manual_reset()* method allows resetting the environment to a specific state/obs.
+
 
 ## Usage Example
 
