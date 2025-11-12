@@ -163,12 +163,15 @@ class Divide21Env(gym.Env):
         return available_digits_per_rindex
     
     def _encode_available_digits(self, given_available_digits_per_rindex=None):
-        if given_available_digits_per_rindex != None:
-            self.available_digits_per_rindex = given_available_digits_per_rindex
-        
+        if given_available_digits_per_rindex is not None:
+            # convert string keys to int if necessary
+            self.available_digits_per_rindex = {
+                int(k): v for k, v in given_available_digits_per_rindex.items()
+            }
+
         mask = np.zeros((self.digits, 10), dtype=np.int64)
         for idx, available in self.available_digits_per_rindex.items():
-            mask[idx, available] = 1
+            mask[int(idx), available] = 1
         return mask.flatten()
 
     def reset(self, *, seed = None, options = None):
@@ -212,23 +215,22 @@ class Divide21Env(gym.Env):
             return # It should not get here!
         
         # update observation space var
-        digits = len(str(obs["s"]))
         number_of_players = len(obs["p"])
-        self.maxScore = 9*digits
+        self.maxScore = 9*len(str(obs["s"]))
         self.observation_space = spaces.Dict({
             "s": spaces.Box(
                 low=0,
                 high=9,
-                shape=(digits,),
+                shape=(len(str(obs["s"])),),
                 dtype=np.int8
             ),
             "d": spaces.Box(
                 low=0,
                 high=9,
-                shape=(digits,),
+                shape=(len(str(obs["d"])),),
                 dtype=np.int8
             ),
-            "a": spaces.MultiBinary(10 * digits),
+            "a": spaces.MultiBinary(10 * len(str(obs["d"]))),
             "p": spaces.Box(
                 low=np.array([0, -self.maxScore-8, 0] * number_of_players, dtype=np.int64),
                 high=np.array([number_of_players - 1, self.maxScore+8, 1] * number_of_players, dtype=np.int64),
@@ -238,9 +240,15 @@ class Divide21Env(gym.Env):
             "t": spaces.Discrete(number_of_players)
         })
         
+        # update the number of digits
+        self.digits = len(str(obs["d"]))
+        
         self.static_number = obs["s"]
         self.dynamic_number = obs["d"]
-        self.available_digits_per_rindex = obs["a"]
+        # convert string keys to int if necessary
+        self.available_digits_per_rindex = {
+            int(k): v for k, v in obs["a"].items()
+        }
         self.players = obs["p"]
         self.player_turn = obs["t"]
         

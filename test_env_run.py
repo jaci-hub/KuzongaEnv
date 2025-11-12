@@ -51,6 +51,6 @@ if __name__ == "__main__":
         "t": 0
     }
     
-    # manual_reset_test(state)
+    manual_reset_test(state)
     
-    reset_test()
+    # reset_test()
