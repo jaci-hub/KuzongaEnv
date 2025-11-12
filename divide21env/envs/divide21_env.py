@@ -20,7 +20,7 @@ class Divide21Env(gym.Env):
 
     def __init__(self, digits=2, players=1, render_mode=None, auto_render=False):
         super().__init__()
-        self.players = [{"id": i, "score": 0, "is_current_turn": 1 if i==0 else 0} for i in range(players)]
+        self.players = [{"i": i, "c": 0, "m": 1 if i==0 else 0} for i in range(players)]
         self.static_number = None
         self.dynamic_number = None
         self.player_turn = 0
@@ -41,9 +41,9 @@ class Divide21Env(gym.Env):
         #   digit (int): if division=true, then it is the divisor, else it is the new digit in the rindex chosen
         #   rindex (int): if division=true, then it is None, else the rindex where the digit will be overwriten
         self.action_space = spaces.Dict({
-            "division": spaces.Discrete(2),
-            "digit": spaces.Discrete(10),
-            "rindex": spaces.Discrete(digits)
+            "v": spaces.Discrete(2),
+            "g": spaces.Discrete(10),
+            "r": spaces.Discrete(digits)
         })
 
         # (2) Observation space: 
@@ -55,34 +55,34 @@ class Divide21Env(gym.Env):
         #   player_turn (int): the id of the player with the turn
         number_of_players = len(self.players)
         self.observation_space = spaces.Dict({
-            "static_number": spaces.Box(
+            "s": spaces.Box(
                 low=0,
                 high=9,
                 shape=(digits,),
                 dtype=np.int8
             ),
-            "dynamic_number": spaces.Box(
+            "d": spaces.Box(
                 low=0,
                 high=9,
                 shape=(digits,),
                 dtype=np.int8
             ),
-            "available_digits_per_rindex": spaces.MultiBinary(10 * digits),
-            "players": spaces.Box(
+            "a": spaces.MultiBinary(10 * digits),
+            "p": spaces.Box(
                 low=np.array([0, -self.maxScore-8, 0] * number_of_players, dtype=np.int64),
                 high=np.array([number_of_players - 1, self.maxScore+8, 1] * number_of_players, dtype=np.int64),
                 shape=(number_of_players * 3,),
                 dtype=np.int64
             ),
-            "player_turn": spaces.Discrete(number_of_players)
+            "t": spaces.Discrete(number_of_players)
         })
     
     
     def _encode_players(self, given_players=None):
         '''
         Encodes player info numerically:
-        Each player has attributes: id, score, is_current_turn
-            Note: if is_current_turn=1, it is the player's turn to play, else, it is not 
+        Each player has attributes: i, c, m
+            Note: if m=1, it is the player's turn to play, else, it is not 
         '''
         if given_players != None:
             self.players = given_players
@@ -90,14 +90,14 @@ class Divide21Env(gym.Env):
         if not self.players:
             # create a default single-player representation
             encoded = np.zeros((1, 3), dtype=np.int64)
-            encoded[0] = [0, 0, 1]  # id=0, score=0, is_current_turn=1
+            encoded[0] = [0, 0, 1]  # i=0, c=0, m=1
             return encoded.flatten()
         
         num_players = len(self.players)
         encoded = np.zeros((num_players, 3), dtype=np.int64)
         for i, p in enumerate(self.players):
-            encoded[i, 0] = p.get("id", i)
-            encoded[i, 1] = p.get("score", 0)
+            encoded[i, 0] = p.get("i", i)
+            encoded[i, 1] = p.get("c", 0)
             encoded[i, 2] = 1 if i == self.player_turn else 0
         return encoded.flatten()
     
@@ -188,11 +188,11 @@ class Divide21Env(gym.Env):
         self.available_digits_per_rindex = self._setup_available_digits_per_rindex()
         self.player_turn = 0
         obs = {
-            "static_number": np.array([int(d) for d in str(self.static_number)], dtype=np.int8),
-            "dynamic_number": np.array([int(d) for d in str(self.dynamic_number)], dtype=np.int8),
-            "available_digits_per_rindex": self._encode_available_digits(),
-            "players": self._encode_players(),
-            "player_turn": np.int64(self.player_turn)
+            "s": np.array([int(d) for d in str(self.static_number)], dtype=np.int8),
+            "d": np.array([int(d) for d in str(self.dynamic_number)], dtype=np.int8),
+            "a": self._encode_available_digits(),
+            "p": self._encode_players(),
+            "t": np.int64(self.player_turn)
         }
         
         info = {"seed": seed}
@@ -212,44 +212,44 @@ class Divide21Env(gym.Env):
             return # It should not get here!
         
         # update observation space var
-        digits = len(str(obs["static_number"]))
-        number_of_players = len(obs["players"])
+        digits = len(str(obs["s"]))
+        number_of_players = len(obs["p"])
         self.maxScore = 9*digits
         self.observation_space = spaces.Dict({
-            "static_number": spaces.Box(
+            "s": spaces.Box(
                 low=0,
                 high=9,
                 shape=(digits,),
                 dtype=np.int8
             ),
-            "dynamic_number": spaces.Box(
+            "d": spaces.Box(
                 low=0,
                 high=9,
                 shape=(digits,),
                 dtype=np.int8
             ),
-            "available_digits_per_rindex": spaces.MultiBinary(10 * digits),
-            "players": spaces.Box(
+            "a": spaces.MultiBinary(10 * digits),
+            "p": spaces.Box(
                 low=np.array([0, -self.maxScore-8, 0] * number_of_players, dtype=np.int64),
                 high=np.array([number_of_players - 1, self.maxScore+8, 1] * number_of_players, dtype=np.int64),
                 shape=(number_of_players * 3,),
                 dtype=np.int64
             ),
-            "player_turn": spaces.Discrete(number_of_players)
+            "t": spaces.Discrete(number_of_players)
         })
         
-        self.static_number = obs["static_number"]
-        self.dynamic_number = obs["dynamic_number"]
-        self.available_digits_per_rindex = obs["available_digits_per_rindex"]
-        self.players = obs["players"]
-        self.player_turn = obs["player_turn"]
+        self.static_number = obs["s"]
+        self.dynamic_number = obs["d"]
+        self.available_digits_per_rindex = obs["a"]
+        self.players = obs["p"]
+        self.player_turn = obs["t"]
         
         new_obs = {
-            "static_number": np.array([int(d) for d in str(obs["static_number"])], dtype=np.int8),
-            "dynamic_number": np.array([int(d) for d in str(obs["dynamic_number"])], dtype=np.int8),
-            "available_digits_per_rindex": self._encode_available_digits(obs["available_digits_per_rindex"]),
-            "players": self._encode_players(obs["players"]),
-            "player_turn": np.int64(obs["player_turn"])
+            "s": np.array([int(d) for d in str(obs["s"])], dtype=np.int8),
+            "d": np.array([int(d) for d in str(obs["d"])], dtype=np.int8),
+            "a": self._encode_available_digits(obs["a"]),
+            "p": self._encode_players(obs["p"]),
+            "t": np.int64(obs["t"])
         }
         
         info = {"seed": seed}
@@ -319,12 +319,12 @@ class Divide21Env(gym.Env):
             return True
         # (2) max points
         for player in self.players:
-            if player['score'] >= self.maxScore:
+            if player["c"] >= self.maxScore:
                 return True
         # (3) only one player left without -max points or less
         count = 0
         for player in self.players:
-            if player['score'] <= -self.maxScore:
+            if player["c"] <= -self.maxScore:
                 if len(self.players) > 1:
                     count += 1
                 else:
@@ -338,21 +338,21 @@ class Divide21Env(gym.Env):
         if self.players:
             self.player_turn = (self.player_turn + 1) % len(self.players)
             if len(self.players) > 1:
-                while self.players[self.player_turn]['score'] <= -self.maxScore:
+                while self.players[self.player_turn]["c"] <= -self.maxScore:
                     self.player_turn = (self.player_turn + 1) % len(self.players)
-            self.players[self.player_turn]['is_current_turn'] = 1
+            self.players[self.player_turn]["m"] = 1
             for player in self.players:
-                if player['id'] != self.players[self.player_turn]['id']:
-                    player['is_current_turn'] = 0
+                if player["i"] != self.players[self.player_turn]["i"]:
+                    player["m"] = 0
     
     def step(self, action):
         """
         Executes one step of the Divide21 environment.
         Args:
             action (dict): {
-                "division": 0 or 1,
-                "digit": int,
-                "rindex": int if division == 0, else None
+                "v": 0 or 1,
+                "g": int,
+                "r": int if division == 0, else None
             }
         Returns:
             obs, reward, terminated, truncated, info
@@ -363,7 +363,7 @@ class Divide21Env(gym.Env):
         info = {}
         
         # check action
-        expected_keys = {'division', 'digit', 'rindex'}
+        expected_keys = {"v", "g", "r"}
         if not isinstance(action, dict):
             reward += -5
             info["critical"] = "Action must be a Python dictionary."
@@ -372,14 +372,14 @@ class Divide21Env(gym.Env):
             info["critical"] = f"Action dictionary must have exactly these keys: {', '.join(expected_keys)}."
         else:
             # get attributes
-            division = bool(action["division"]) if action["division"] in [0, 1, True, False] else None
-            digit = int(action["digit"]) if action["digit"] in range(0, 10) else None
-            rindex = int(action["rindex"]) if (isinstance(action["rindex"], (int, np.integer)) and action["rindex"]>=0) else None
+            division = bool(action["v"]) if action["v"] in [0, 1, True, False] else None
+            digit = int(action["g"]) if action["g"] in range(0, 10) else None
+            rindex = int(action["r"]) if (isinstance(action["r"], (int, np.integer)) and action["r"]>=0) else None
 
             # check division
             if division is None:
                 reward += -5
-                info["critical"] = "The value for the division attribute must be either True or False, or 1 or 0."
+                info["critical"] = "The value for the division key, v, must be either True or False, or 1 or 0."
             # check digit
             elif digit is None:
                 reward += -5
@@ -387,14 +387,14 @@ class Divide21Env(gym.Env):
             # check rindex
             elif rindex is None and division is None:
                 reward += -5
-                info["critical"] = "Rindex must be an integer greater than or equal to 0."
+                info["critical"] = "Rindex, r, must be an integer greater than or equal to 0."
             
             # (1) Division attempt
             elif division:
                 # deduct points if rindex is not None
                 if rindex != None:
                     reward += -2
-                    info["warning"] = "Rindex should have not been provided!"
+                    info["warning"] = "Rindex, r, should have not been provided!"
                 
                 if digit in [0, 1]: # not allowed to divide by 0 or 1
                     reward += -5
@@ -416,14 +416,14 @@ class Divide21Env(gym.Env):
                     self._update_available_digits_per_rindex() # no need to pass the rindex, because a division was performed
                     # update player score
                     if self.players:
-                        self.players[self.player_turn]["score"] += digit
+                        self.players[self.player_turn]["c"] += digit
                     info["note"] = f"Divided by {digit}."
                 else:
                     reward += -1
                     # update player score
                     if self.players:
-                        self.players[self.player_turn]["score"] -= digit
-                        if self.players[self.player_turn]['score'] <= -self.maxScore:
+                        self.players[self.player_turn]["c"] -= digit
+                        if self.players[self.player_turn]["c"] <= -self.maxScore:
                             # update player turn
                             self._update_player_turn()
                     info["note"] = f"Careful, {digit} is not a factor of {self.dynamic_number}."
@@ -445,10 +445,10 @@ class Divide21Env(gym.Env):
                     self._update_available_digits_per_rindex(rindex)
                     # update player turn
                     self._update_player_turn()
-                    info["note"] = f"Updated digit at rindex {rindex} to {digit}."
+                    info["note"] = f"Updated digit at rindex r={rindex} to {digit}."
                 else:
                     reward += -2
-                    info["warning"] = f"Cannot update the digit at rindex {rindex} to {digit}."
+                    info["warning"] = f"Cannot update the digit at rindex r={rindex} to {digit}."
 
         # Check if game is over
         if self._game_over():
@@ -463,11 +463,11 @@ class Divide21Env(gym.Env):
 
         # Create Observation
         obs = {
-            "static_number": np.array([int(d) for d in str(self.static_number)], dtype=np.int8),
-            "dynamic_number": np.array([int(d) for d in str(self.dynamic_number)], dtype=np.int8),
-            "available_digits_per_rindex": self._encode_available_digits(),
-            "players": self._encode_players(),
-            "player_turn": np.int64(self.player_turn)
+            "s": np.array([int(d) for d in str(self.static_number)], dtype=np.int8),
+            "d": np.array([int(d) for d in str(self.dynamic_number)], dtype=np.int8),
+            "a": self._encode_available_digits(),
+            "p": self._encode_players(),
+            "t": np.int64(self.player_turn)
         }
         
         # Render to see output
@@ -486,7 +486,9 @@ class Divide21Env(gym.Env):
             print(f"Turn: Player{self.player_turn}")
             print('*** Scoreboard ***')
             for p in self.players:
-                print(f"Player{p['id']}: {p['score']} pts")
+                id = p["i"]
+                score = p["c"]
+                print(f"Player{id}: {score} pts")
             print('******************')
 
 
