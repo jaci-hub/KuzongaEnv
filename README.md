@@ -9,16 +9,16 @@ The environment uses a dictionary action space with three components:
 
 | Key       | Value       | Description |
 |-----------|------------|-------------|
-| division  | 1 or 0 (or True and False, respectively)     | Whether to attempt division (`1`) or change a digit (`0`). |
-| digit     | 0–9        | If `division=1`, the divisor; if `division=0`, the new digit to set at `rindex`. |
-| rindex     | 0…digits-1 or `None` | Rindex (Right-to-left or reverse index) of the digit to overwrite (if `division=1`, it should be `None`). |
+| v  | 1 or 0 (or True and False, respectively)     | Whether to attempt division (`1`) or change a digit (`0`). |
+| g     | 0–9        | If `v=1`, the divisor; if `v=0`, the new digit to set at `r`. |
+| r     | 0…digits-1 or `None` | Rindex (Right-to-left or reverse index) of the digit to overwrite (if `v=1`, it should be `None`). |
 
 
 Example:
 
 ```python
-action = {"division": 1, "digit": 3, "rindex": None}  # attempt division by 3
-action = {"division": 0, "digit": 7, "rindex": 1}  # set the second digit (from the right) to 7
+action = {"v": 1, "g": 3, "r": None}  # attempt division by 3
+action = {"v": 0, "g": 7, "r": 1}  # set the second digit (from the right) to 7
 ```
 
 ### Observation Space
@@ -27,31 +27,31 @@ The environment uses a dictionary observation space with the following keys:
 
 | Key                        | Type                     | Description |
 |----------------------------|-------------------------|-------------|
-| static_number             | np.int8 array (digits,) | The original number as an array of digits. |
-| dynamic_number             | np.int8 array (digits,) | The current number as an array of digits. |
-| available_digits_per_rindex | np.int64 array (digits*10,) | Binary mask of which digits can be set at each position. Flattened from shape (digits, 10). |
-| players                    | np.int64 array (num_players*3,) | Each player’s `[id, score, is_current_turn]`. Flattened array of all players. It has one player by default. |
-| player_turn                | int                      | ID of the player whose turn it is. |
+| s             | np.int8 array (digits,) | The original number as an array of digits. |
+| d             | np.int8 array (digits,) | The current number as an array of digits. |
+| a | np.int64 array (digits*10,) | Binary mask of which digits can be set at each position. Flattened from shape (digits, 10). |
+| p                    | np.int64 array (num_players*3,) | Each player’s `[i, c, m]`, where `i` is the ID, `c` is the score and `m` tells if it is the player's turn (`m=1`) or not (`m=0`). Flattened array of all players. It has one player by default. |
+| t                | int                      | ID of the player whose turn it is. |
 
 
 Example:
 
 ```python
 obs, info = env.reset()
-print(obs["static_number"])             # [1, 7]
-print(obs["dynamic_number"])            # [4, 7]
-print(obs["available_digits_per_rindex"])  # array([1,1,0,...])
-print(obs["players"])                   # array([0,0,1,1,0,0])  # two players
-print(obs["player_turn"])               # 0
+print(obs["s"])   # [1, 7]
+print(obs["d"])   # [4, 7]
+print(obs["a"])   # array([1,1,0,...])
+print(obs["p"])   # array([0,0,1,1,0,0])  # two players
+print(obs["t"])   # 0
 ```
 
 ### Quick Notes
 
-The *available_digits_per_rindex* mask ensures illegal moves (e.g., setting a leading zero or creating number 0/1) are prevented.
+The *a* mask ensures illegal moves (e.g., setting a leading zero or creating number 0/1) are prevented.
 
 Rewards and penalties are automatically updated in the environment during *step()*.
 
-The environment fully supports multiple players, and tracks turns via *player_turn* and *is_current_turn*.
+The environment fully supports multiple players, and tracks turns via *t* and *m*.
 
 The *options* parameter in *reset()* allows resetting the environment to a specific given state/obs, by setting it with the format: `options = {'obs': <state/obs dict>}`
 
