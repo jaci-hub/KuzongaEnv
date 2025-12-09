@@ -101,30 +101,24 @@ class Divide21Env(gym.Env):
             encoded[i, 2] = 1 if i == self.player_turn else 0
         return encoded.flatten()
     
+    def _has_one_digit_divisor(self, num):
+        res = False
+        for i in range(2, 10):
+            if num % i == 0:
+                res = True
+                break
+        return res
     
-    def _create_dynamic_number(self, max_attempts=10_000):
-        '''
-        generate a valid starting number
-        '''
-        rng = self.np_random  # gym seeding
-        for _ in range(max_attempts):
-            # sample digits 0-9
-            digits_arr = rng.integers(0, 10, size=self.digits)
-            # ensure first digit != 0
-            if digits_arr[0] == 0:
-                digits_arr[0] = rng.integers(1, 10)
-            s = "".join(str(int(d)) for d in digits_arr)  # string form
-            # check divisibility condition using Python int (arbitrary precision)
-            try:
-                num = int(s)
-            except Exception:
-                continue
-            if math.gcd(num, 210) == 1:
-                return int(s)
+    def _create_dynamic_number(self):
+        min_val = 10 ** (self.digits - 1)
+        max_val = (10 ** self.digits) - 1
 
-        # fallback: deterministic string like "10...01"
-        fallback = "1" + ("0" * (self.digits - 2)) + "1"
-        return int(fallback)
+        num = random.randint(min_val, max_val)
+
+        while self._has_one_digit_divisor(num):
+            num = random.randint(min_val, max_val)
+
+        return str(num)
     
     def _get_prohibited_digit_list_at_rindex(self, rindex):
         prohibited = set()
