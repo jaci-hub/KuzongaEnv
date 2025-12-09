@@ -118,7 +118,7 @@ class Divide21Env(gym.Env):
         while self._has_one_digit_divisor(num):
             num = random.randint(min_val, max_val)
 
-        return str(num)
+        return int(num)
     
     def _get_prohibited_digit_list_at_rindex(self, rindex):
         prohibited = set()
