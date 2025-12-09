@@ -7,6 +7,8 @@ from divide21env.envs.divide21_env import Divide21Env
 # Test the environment registration
 env = gym.make(
     "Divide21-v0",
+    digits=4,
+    players=3,
     render_mode="human",
     auto_render=True
 )
