@@ -1,11 +1,11 @@
-import divide21env
+import kuzongaenv
 import json
 import os
 import numpy as np
-from divide21env.utils.logger import EpisodeLogger
+from kuzongaenv.utils.logger import EpisodeLogger
 
 # base dir
-BASE_DIR = './divide21x/inspection/logs'
+BASE_DIR = './kuzongax/inspection/logs'
 # categories
 ACTION = 'action'
 STATE = 'state'
@@ -50,7 +50,7 @@ class Inspector():
     
     def inspect_action(self):
         '''
-        inspect the action, to ensure it follows the format of the game Divide21
+        inspect the action, to ensure it follows the format of the game Kuzonga
         '''
         # check action
         expected_keys = {"v", "g", "r"}
@@ -103,7 +103,7 @@ class Inspector():
     
     def inspect_state(self):
         '''
-        inspect the state, to ensure it follows the format of the game Divide21
+        inspect the state, to ensure it follows the format of the game Kuzonga
         '''
         # check state
         expected_keys = {"s", "d", "a", "p", "t"}
@@ -235,7 +235,7 @@ class Inspector():
     
     def inspect_all(self):
         '''
-        inspect both the action and the state, to ensure they follow the format of the game Divide21
+        inspect both the action and the state, to ensure they follow the format of the game Kuzonga
         '''
         self.inspect_action()
         self.inspect_state()

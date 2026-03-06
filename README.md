@@ -1,6 +1,6 @@
-# Divide21Env
+# KuzongaEnv
 
-A custom Gymnasium-compatible environment for the [Divide21 game](https://www.divide21.com).
+A custom Gymnasium-compatible environment for the [Kuzonga game](https://www.kuzonga.com).
 
 ## Environment Details
 ### Action Space
@@ -60,9 +60,9 @@ The *options* parameter in *reset()* allows resetting the environment to a speci
 
 ```python
 import gymnasium as gym
-import divide21env
+import kuzongaenv
 
-env = gym.make("Divide21-v0")
+env = gym.make("Kuzonga-v0")
 obs, info = env.reset()
 action = env.action_space.sample()
 obs, reward, terminated, truncated, info = env.step(action)
@@ -79,22 +79,22 @@ pip install -e .
 
 ## Cite This Project
 
-If you use **Divide21** in your research, projects, or publications, please cite it as:
+If you use **Kuzonga** in your research, projects, or publications, please cite it as:
 
-Jacinto Jeje Matamba Quimua (2025). Divide21Env: Gym Environment for Reinforcement Learning Experiments. GitHub repository: https://github.com/jaci-hub/divide21Env
+Jacinto Jeje Matamba Quimua (2025). KuzongaEnv: Gym Environment for Reinforcement Learning Experiments. GitHub repository: https://github.com/jaci-hub/kuzongaenv
 
 
 ### BibTeX
 
 ```bibtex
-@misc{divide21env2025,
+@misc{kuzongaenv2025,
   author       = {Jacinto Jeje Matamba Quimua},
-  title        = {Divide21Env: Gym Environment for Reinforcement Learning Experiments},
+  title        = {KuzongaEnv: Gym Environment for Reinforcement Learning Experiments},
   year         = 2025,
-  howpublished = {\url{https://github.com/jaci-hub/divide21Env}},
+  howpublished = {\url{https://github.com/jaci-hub/kuzongaenv}},
 }
 ```
 
-## Play Divide21 Online
+## Play Kuzonga Online
 
-[Divide21 game](https://www.divide21.com)
+[Kuzonga game](https://www.kuzonga.com)

@@ -2,7 +2,7 @@
 Name: Jacinto Jeje Matamba Quimua
 Date: 10/28/2025
 
-This is the python gym-style API for my game Divide21
+This is the python gym-style API for my game Kuzonga
 '''
 
 import math
@@ -11,11 +11,11 @@ import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
 import warnings
-from divide21env.inspection.inspector import Inspector
+from kuzongaenv.inspection.inspector import Inspector
 
 
 
-class Divide21Env(gym.Env):
+class KuzongaEnv(gym.Env):
     metadata = {"render_modes": ["human"]}
 
     def __init__(self, digits=2, players=1, render_mode=None, auto_render=False):
@@ -349,7 +349,7 @@ class Divide21Env(gym.Env):
     
     def step(self, action):
         """
-        Executes one step of the Divide21 environment.
+        Executes one step of the Kuzonga environment.
         Args:
             action (dict): {
                 "v": 0 or 1,

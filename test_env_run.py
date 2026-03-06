@@ -1,19 +1,19 @@
-import divide21env 
+import kuzongaenv 
 import gymnasium as gym
 from gymnasium.utils.env_checker import check_env
-from divide21env.envs.divide21_env import Divide21Env
+from kuzongaenv.envs.kuzonga_env import KuzongaEnv
 
 
 # Test the environment registration
 env = gym.make(
-    "Divide21-v0",
+    "Kuzonga-v0",
     digits=4,
     players=3,
     render_mode="human",
     auto_render=True
 )
 
-# env = Divide21Env(
+# env = KuzongaEnv(
 #     render_mode="human",
 #     auto_render=True
 # )

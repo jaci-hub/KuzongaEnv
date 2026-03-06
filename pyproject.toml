@@ -3,9 +3,9 @@ requires = ["setuptools>=65", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "divide21env"
+name = "kuzongaenv"
 version = "0.2.8"
-description = "Gymnasium environment for the game Divide21"
+description = "Gymnasium environment for the game Kuzonga"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
@@ -18,4 +18,4 @@ dependencies = [
 ]
 
 [project.urls]
-"Source" = "https://github.com/jaci-hub/divide21Env"
+"Source" = "https://github.com/jaci-hub/kuzongaenv"
