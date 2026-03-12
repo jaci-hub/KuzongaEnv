@@ -347,6 +347,88 @@ class KuzongaEnv(gym.Env):
                 if player["i"] != self.players[self.player_turn]["i"]:
                     player["m"] = 0
     
+    # START | Functions to decode the state | START
+    def _decode_dynamic_number(self, dynamic_number):
+        decoded_dynamic_number = [str(d) for d in dynamic_number.tolist()]
+        decoded_dynamic_number = ''.join(decoded_dynamic_number)
+        decoded_dynamic_number = int(decoded_dynamic_number)
+        return decoded_dynamic_number
+    
+    def _decode_available_digits(self, flat_mask, digits):
+        '''
+        Reconstruct the 'a' dictionary from the
+        flattened mask produced by _encode_available_digits().
+
+        Args:
+            flat_mask (array-like): Flattened binary mask of shape (self.digits * 10,)
+
+        Returns:
+            dict[int, list[int]]: Dictionary mapping each rindex to its list of available digits.
+        '''
+        # Ensure it's a list of ints
+        flat_list = list(flat_mask)
+        # Rebuild mask as 2D matrix (digits x 10)
+        mask_2d = [flat_list[i * 10 : (i + 1) * 10] for i in range(digits)]
+        
+        # Decode dictionary
+        decoded = {}
+        for rindex, row in enumerate(mask_2d):
+            available_digits = [digit for digit, flag in enumerate(row) if flag == 1]
+            decoded[rindex] = available_digits
+
+        return decoded
+    
+    def _decode_players(self, flat_array):
+        '''
+        Reconstruct the list of player dictionaries from the flattened NumPy array
+        produced by _encode_players().
+
+        Args:
+            flat_array (array-like): Flattened 1D list or NumPy array of shape (num_players * 3,).
+
+        Returns:
+            list[dict]: List of players, each as {"i": int, "c": int, "m": int}.
+        '''
+        # Ensure it's a plain list of ints
+        flat_list = list(flat_array)
+        
+        # Each player has 3 attributes: [i, c, m]
+        num_players = len(flat_list) // 3
+        
+        players = []
+        for i in range(num_players):
+            start = i * 3
+            pid, score, turn_flag = flat_list[start:start + 3]
+            player = {
+                "i": int(pid),
+                "c": int(score),
+                "m": int(turn_flag)
+            }
+            players.append(player)
+        
+        return players
+    
+    def _decode_player_turn(self, player_turn):
+        return int(player_turn)
+    
+    def _decode_state(self, state):
+        '''
+        the observation space attributes from KuzongaEnv are in numpy variables which are not json compatible, 
+        so make sure they are.
+        '''
+        decoded_static_number = self._decode_dynamic_number(state["s"])
+        decoded_dynamic_number = self._decode_dynamic_number(state["d"])
+        decoded_state = {
+            "s": decoded_static_number,
+            "d": decoded_dynamic_number,
+            "a": self._decode_available_digits(state["a"], len(str(decoded_dynamic_number))),
+            "p": self._decode_players(state["p"]),
+            "t": self._decode_player_turn(state["t"])
+        }
+        
+        return decoded_state
+    # END | Functions to decode the state | END
+    
     def step(self, action):
         """
         Executes one step of the Kuzonga environment.
@@ -471,7 +553,11 @@ class KuzongaEnv(gym.Env):
             "p": self._encode_players(),
             "t": np.int64(self.player_turn)
         }
-        
+
+        # add decoded obs to info
+        obs_decoded = self._decode_state(obs)
+        info['obs_decoded'] = obs_decoded
+
         # Render to see output
         if self.render_mode == "human" and getattr(self, "auto_render", True):
             self.render()
