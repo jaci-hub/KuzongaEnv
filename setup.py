@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="kuzongaenv",
-    version="0.2.9",
+    version="0.3.0",
     author="Jacinto Jeje Matamba Quimua",
     description="A custom Gymnasium-compatible environment for the Kuzonga",
     long_description=open("README.md", encoding="utf-8").read(),
