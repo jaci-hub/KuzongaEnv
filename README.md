@@ -55,7 +55,7 @@ The environment fully supports multiple players, and tracks turns via *t* and *m
 
 The *options* parameter in *reset()* allows resetting the environment to a specific given state/obs, by setting it with the format: `options = {'obs': <state/obs dict>}`
 
-The fifth returned value of the method `step` (commonly the `info` variable) has the fields:
+The `info` variable value from methods `reset()` and `step()` has the fields:
 - `obs_decoded`, which has the plain values of the resulting state/observation. So it can be retrieved as `info['obs_decoded']`
 - `all_actions`, which is a list of all the actions in the current state. So it can be retrieved as `info['all_actions']`
 
