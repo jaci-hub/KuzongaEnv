@@ -193,6 +193,12 @@ class KuzongaEnv(gym.Env):
         }
         
         info = {"seed": seed}
+        # add decoded obs to info
+        obs_decoded = self._decode_state(obs)
+        info['obs_decoded'] = obs_decoded
+        # add all_actions to info
+        info['all_actions'] = self._get_all_actions(obs_decoded)
+
         return obs, info
     
     def _manual_reset(self, *, seed = None, options = None):
@@ -256,7 +262,35 @@ class KuzongaEnv(gym.Env):
         
         info = {"seed": seed}
         info = {"manual_reset": True}
+        # add decoded obs to info
+        info['obs_decoded'] = obs
+        # add all_actions to info
+        info['all_actions'] = self._get_all_actions(obs)
+
         return new_obs, info
+    
+    def _get_all_actions(self, state):
+        all_actions=[]
+        # (1) add the division actions (v=1)
+        for g in range(2,10):
+            action={
+                'v': 1,
+                'g': g,
+                'r': None
+            }
+            all_actions.append(action)
+        # (2) add the digit change actions (v=0)
+        for rindex in state['a']:
+            available_digits = state['a'][rindex]
+            for g in available_digits:
+                action={
+                    'v': 0,
+                    'g': g,
+                    'r': rindex
+                }
+                all_actions.append(action)
+        
+        return all_actions
     
     def _rindex_available_digit_list_is_empty(self, rindex):
         if not self.available_digits_per_rindex:
@@ -557,29 +591,8 @@ class KuzongaEnv(gym.Env):
         # add decoded obs to info
         obs_decoded = self._decode_state(obs)
         info['obs_decoded'] = obs_decoded
-
         # add all_actions to info
-        all_actions=[]
-        # (1) add the division actions (v=1)
-        for g in range(2,10):
-            action={
-                'v': 1,
-                'g': g,
-                'r': None
-            }
-            all_actions.append(action)
-        # (2) add the digit change actions (v=0)
-        for rindex in obs_decoded['a']:
-            available_digits = obs_decoded['a'][rindex]
-            for g in available_digits:
-                action={
-                    'v': 0,
-                    'g': g,
-                    'r': rindex
-                }
-                all_actions.append(action)
-        # (3) put it all together
-        info['all_actions'] = all_actions
+        info['all_actions'] = self._get_all_actions(obs_decoded)
 
         # Render to see output
         if self.render_mode == "human" and getattr(self, "auto_render", True):
