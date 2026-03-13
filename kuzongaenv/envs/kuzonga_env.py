@@ -558,6 +558,29 @@ class KuzongaEnv(gym.Env):
         obs_decoded = self._decode_state(obs)
         info['obs_decoded'] = obs_decoded
 
+        # add all_actions to info
+        all_actions=[]
+        # (1) add the division actions (v=1)
+        for g in range(2,10):
+            action={
+                'v': 1,
+                'g': g,
+                'r': None
+            }
+            all_actions.append(action)
+        # (2) add the digit change actions (v=0)
+        for rindex in obs_decoded['a']:
+            available_digits = obs_decoded['a'][rindex]
+            for g in available_digits:
+                action={
+                    'v': 0,
+                    'g': g,
+                    'r': rindex
+                }
+                all_actions.append(action)
+        # (3) put it all together
+        info['all_actions'] = all_actions
+
         # Render to see output
         if self.render_mode == "human" and getattr(self, "auto_render", True):
             self.render()
