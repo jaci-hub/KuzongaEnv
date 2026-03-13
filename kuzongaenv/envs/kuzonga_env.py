@@ -198,6 +198,9 @@ class KuzongaEnv(gym.Env):
         info['obs_decoded'] = obs_decoded
         # add all_actions to info
         info['all_actions'] = self._get_all_actions(obs_decoded)
+        # Check if game is over
+        if self._game_over():
+            info["concluded"] = True
 
         return obs, info
     
@@ -266,6 +269,9 @@ class KuzongaEnv(gym.Env):
         info['obs_decoded'] = obs
         # add all_actions to info
         info['all_actions'] = self._get_all_actions(obs)
+        # Check if game is over
+        if self._game_over():
+            info["concluded"] = True
 
         return new_obs, info
     
@@ -479,6 +485,21 @@ class KuzongaEnv(gym.Env):
         terminated = False
         truncated = False
         info = {}
+
+        # Check if game is over
+        if self._game_over():
+            info["concluded"] = True
+            terminated = True
+            # Create Observation
+            obs = {
+                "s": np.array([int(d) for d in str(self.static_number)], dtype=np.int8),
+                "d": np.array([int(d) for d in str(self.dynamic_number)], dtype=np.int8),
+                "a": self._encode_available_digits(),
+                "p": self._encode_players(),
+                "t": np.int64(self.player_turn)
+            }
+            info["critical"]=f"Action can not be performed on a finished state!"
+            return obs, float(reward), terminated, truncated, info
         
         # check action
         expected_keys = {"v", "g", "r"}
@@ -570,15 +591,14 @@ class KuzongaEnv(gym.Env):
 
         # Check if game is over
         if self._game_over():
+            info["concluded"] = True
             terminated = True
             
             if reward > 0:
                 reward += 10
             else:
                 reward -= 10
-            
-            info["concluded"] = True
-
+        
         # Create Observation
         obs = {
             "s": np.array([int(d) for d in str(self.static_number)], dtype=np.int8),
